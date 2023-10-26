@@ -4,6 +4,7 @@ project:
 
 website:
   title: "Matt's Baby Stats"
+  twitter-card: true
   navbar:
     right:
       - about.qmd
@@ -21,4 +22,4 @@ format:
 
 execute:
   freeze: auto
-
+  

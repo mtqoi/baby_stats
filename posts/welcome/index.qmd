@@ -8,7 +8,7 @@ categories: [news, baby]
 My name is Matt. This is me and my baby:
 
 
-![](profile.jpg)
+![](profile.jpg){width=300 fig-align="center"}
 
 I have a background in computational physics and am a data scientist by trade. 
 
