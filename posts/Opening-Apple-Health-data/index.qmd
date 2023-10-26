@@ -1,9 +1,9 @@
 ---
-title: "Opening Apple Health data"
+title: "First off: how do I even open Apple Health data?"
 format: html
 editor: visual
 date: '2023-10-26'
-categories: [apple, code, import, xml, R]
+categories: [apple health, apple watch, code, import, xml, R]
 image: 'image.jpg'
 author: Matt Thornton
 ---
@@ -12,7 +12,7 @@ author: Matt Thornton
 
 ## Opening Apple Health data
 
-My partner exported her Apple Health data using the Health app's export functionality. We now have a folder of `.xml` files to deal with.
+I have exported my Apple Health data using the Health app's export functionality. We now have a folder of `.xml` files to deal with. Eventually I'll switch to using my partner's tracking data--it will be a far better proxy of the baby's sleep habits--but she is currently at a baby class so I'll need to grab it later.
 
 Let's take a look at `export.xml` which I think should contain the sleep data.
 
@@ -34,10 +34,6 @@ Let's parse the `xml` file properly and see what we have
 library("XML")
 
 # here are some ones that I think I might need
-library("methods")
-library("tidyverse")
-library("lubridate")
-library("ggplot2")
 library("dplyr")
 
 # parse the xml file
@@ -61,6 +57,34 @@ health_df <- XML:::xmlAttrsToDataFrame(health["//Record"], stringsAsFactors = FA
         as_tibble() |> mutate(value = as.numeric(value)) |>
         select(-device)  
 
+
+```
+
+I don't *really* understand what's going on here yet so let's try to pull it apart bit by bit.
+
+According to the snippet the information I should be interested in is contained in `health['//Record']`. Inspecting this with `typeof(health['//Record'])` I can see that it's a list so let's just grab the first element:
+
+```{r}
+health['//Record'][[1]] # remember that R is 1-indexed, unlike Python!
+```
+
+Ok now we're talking. It looks like those `HKQuantityTypeIdenifiers` are identified with some field called `type`. We also seem to have some metadata about where this data came from - seems like this entry is from the Apple Health app? We have some info about the app itself (perhaps '15.6.1' corresponds to the Health app, or it could be iOS version maybe?).
+
+We have a few datetime fields that I'll need to dig into, and then a value '6.3333' and a unit 'ft'. It looks like this entry must have been when I entered my height when I first got my iPhone.
+
+Let's take a look at a few more:
+
+```{r}
+health['//Record'][42:44]
+```
+
+Three records of my heart rate, by the looks of things. I was right that our previous `sourceName` corresponded to iPhone Health app - clearly these three entries are from my Apple Watch.
+
+The rest of the earlier snippet just looks like it's converting these entries into a dataframe using `XML:::xmlAttrsToDataFrame()`. I can't easily find documentation for this but I will search harder later. In particular I will want to see whether it has more arguments than just `stringsasfactors`.
+
+Taking a look at the dataframe we have made:
+
+```{r}
 summary(health_df)
 ```
 
@@ -82,6 +106,4 @@ The `type` field looks to contain my different health data, so I'll want to filt
 
 Then we have `creationDate`, `startDate` and `endDate`. I will need to cast these to datetimes (& work out how to work with datetimes in R!) and then work out how they relate to the `value` field for the sleep data that I am interested in. I assume that the relationship between the datetime fields and `value` will differ depending on `type` so there's not going to be a one-size-fits-all approach here.
 
-### `type` distribution
-
-Let's look at the most frequent `type`'s
+In the next post I will start to dig in to these fields!

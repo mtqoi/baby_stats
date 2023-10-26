@@ -7,19 +7,22 @@ website:
   twitter-card: true
   navbar:
     right:
-      - about.qmd
+      - blog.qmd
       - icon: github
         href: https://github.com/mtqoi/baby_stats
       - icon: twitter
         href: https://twitter.com/mtqoi
       - icon: linkedin
         href: https://www.linkedin.com/in/mattcthornton/
+  
 format:
   html:
     theme: yeti
     css: styles.css
     code-overflow: wrap
+    title-block-banner: false
 
 execute:
   freeze: auto
   
+
