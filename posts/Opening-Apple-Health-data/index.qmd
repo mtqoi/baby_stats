@@ -4,7 +4,7 @@ format: html
 editor: visual
 date: '2023-10-26'
 categories: [apple health, apple watch, code, import, xml, R]
-image: 'image.jpg'
+image: 'image.png'
 author: Matt Thornton
 ---
 
