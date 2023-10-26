@@ -8,7 +8,7 @@ website:
     right:
       - about.qmd
       - icon: github
-        href: https://github.com/mtqoi
+        href: https://github.com/mtqoi/baby_stats
       - icon: twitter
         href: https://twitter.com/mtqoi
       - icon: linkedin
