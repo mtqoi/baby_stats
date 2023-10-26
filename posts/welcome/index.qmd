@@ -1,12 +1,27 @@
 ---
-title: "Welcome To My Blog"
+title: "Welcome to Matt's Baby stats"
 author: "Matt Thornton"
 date: "2023-10-25"
 categories: [news, baby]
 ---
 
-This is the first post in a Quarto blog. Welcome!
+My name is Matt. This is me and my baby:
 
-![](thumbnail.jpg)
 
-Since this post doesn't specify an explicit `image`, the first image in the post will be used in the listing page of posts.
+![](profile.jpg)
+
+I have a background in computational physics and am a data scientist by trade. 
+
+Me and my partner would like to know what factors contribute to a good night's sleep for our baby. In particular, I would like to answer the following questions:
+
+  Does a late nap contribute to a worse night's sleep? 
+  Does the timing of bathtime affect sleep patterns?
+  Does a more substantial evening 'meal' contribute to longer sleep?
+  
+I have the following data sources:
+
+- SQLite database from Baby Daybook app → nap data. Self-reported.
+- XML files from Apple Health → nighttime sleep data. Measured on Apple Watch. Use this as a proxy for baby sleep.
+- Numbers spreadsheet → additional nap data, self-reported. Use this to vibe check the data from Baby Daybook and assess it for quality and cleanliness.
+
+I'll be using R and SQLite to bring these data sources together and try to gain some understanding. Plan is to stick it into this blog along the way.

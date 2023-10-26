@@ -1,5 +1,5 @@
 ---
-title: "About Matt's Baby Stats"
+title: "About Matt and his Baby Stats"
 image: profile.jpg
 about:
   template: jolla
@@ -16,5 +16,43 @@ about:
 
 ---
 
+My name is Matt. I have a baby. I would like to see whether a nap later in the day corresponds to the baby (and by extension me and my partner) having a worse night's sleep. 
 
-About this blog
+The project will be mainly in R and SQLite. My daily data analysis stack is Python+MySQL so I will use this project to learn some new things. It will be a nice chance to spend more time in RStudio, which is clearly the superlative IDE for my type of data work.
+
+
+I don't completely expect the project to yield anything earth shattering but it is a nice excuse to do some data visualisations and practice my R. 
+
+I'll be using self-reported data from a baby tracking app, some data we've written ourselves in a Numbers spreadsheet, and my partner's Apple Watch sleep tracking data, in an attempt to answer the following questions:
+
+
+### Primary Question
+
+  Does a late nap contribute to a worse night's sleep? 
+
+
+### Secondary Questions
+
+  Does the timing of bathtime affect sleep patterns?
+  Does a more substantial evening 'meal' contribute to longer sleep?
+
+## About Matt
+I am a Lead Data Scientist at Twinkl Education Publishing. I have a PhD in theoretical quantum physics from the University of St Andrews and I spend most of my time making powerpoints and doing analysis to measure and improve metrics at Twinkl.
+
+## Education
+
+University of St Andrews
+PhD in Theoretical Physics | Sept 2016 - March 2020
+
+University of St Andrews
+MPhys Mathematics and Theoretical Physics | Sept 2011 - June 2016
+
+## Experience
+
+Twinkl Educational Publishing | Lead Data Scientist | August 2022 - present
+
+Twinkl Educational Publishing | Data Scientist | January 2022 - August 2022
+
+Pivigo | Data Scientist Fellow | October 2022 - November 2022
+
+University of St Andrews | Research Fellow | April 2020 - June 2021

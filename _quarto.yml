@@ -15,8 +15,9 @@ website:
         href: https://www.linkedin.com/in/mattcthornton/
 format:
   html:
-    theme: cosmo
+    theme: yeti
     css: styles.css
+    code-overflow: wrap
 
 execute:
   freeze: auto

@@ -65,13 +65,23 @@ summary(health_df)
 ```
 
 ```{r}
-glimpse(health_df)
+dim(health_df)
 ```
 
-Okay so we have half a million rows and eight columns. We've already cast our values to numeric, which is great. Looks like we have some metadata (`sourceName`, `sourceVersion`) about how the data was collected. I should take a quick glance at these fields but I can probably ignore them.
+Okay so we have half a million rows and eight columns. Let's take a look inside:
+
+```{r}
+health_df %>% 
+  tail(10) %>% 
+  glimpse
+```
+
+We've already cast our values to numeric, which is great. Looks like we have some metadata (`sourceName`, `sourceVersion`) about how the data was collected. I should take a quick glance at these fields but I can probably ignore them.
 
 The `type` field looks to contain my different health data, so I'll want to filter by that. `unit` is *probably* nothing I need to think about, but once I've found my sleep data I should just check that I can safely ignore the field.
 
 Then we have `creationDate`, `startDate` and `endDate`. I will need to cast these to datetimes (& work out how to work with datetimes in R!) and then work out how they relate to the `value` field for the sleep data that I am interested in. I assume that the relationship between the datetime fields and `value` will differ depending on `type` so there's not going to be a one-size-fits-all approach here.
+
+### `type` distribution
 
 Let's look at the most frequent `type`'s

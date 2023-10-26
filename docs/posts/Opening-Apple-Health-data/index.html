@@ -119,7 +119,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
     <a class="nav-link" href="../../about.html" rel="" target="">
- <span class="menu-text">About Matt’s Baby Stats</span></a>
+ <span class="menu-text">About Matt and his Baby Stats</span></a>
   </li>  
   <li class="nav-item compact">
     <a class="nav-link" href="https://github.com/mtqoi/baby_stats" rel="" target=""><i class="bi bi-github" role="img">
@@ -293,26 +293,38 @@ Caused by warning:
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(health_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(health_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 505,685
+<pre><code>[1] 505685      8</code></pre>
+</div>
+</div>
+<p>Okay so we have half a million rows and eight columns. Let’s take a look inside:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>health_df <span class="sc">%&gt;%</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tail</span>(<span class="dv">10</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  glimpse</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 10
 Columns: 8
-$ type          &lt;chr&gt; "HKQuantityTypeIdentifierHeight", "HKQuantityTypeIdentif…
-$ sourceName    &lt;chr&gt; "Health", "Health", "Matthew’s Apple&nbsp;Watch", "Matthew’s …
-$ sourceVersion &lt;chr&gt; "15.6.1", "15.6.1", "9.3.1", "9.3.1", "9.3.1", "9.3.1", …
-$ unit          &lt;chr&gt; "ft", "kg", "count/min", "count/min", "count/min", "coun…
-$ creationDate  &lt;chr&gt; "2022-08-22 21:27:24 +0100", "2022-08-22 21:27:24 +0100"…
-$ startDate     &lt;chr&gt; "2022-08-22 21:27:24 +0100", "2022-08-22 21:27:24 +0100"…
-$ endDate       &lt;chr&gt; "2022-08-22 21:27:24 +0100", "2022-08-22 21:27:24 +0100"…
-$ value         &lt;dbl&gt; 6.33333, 114.50000, 93.00000, 91.00000, 96.00000, 92.000…</code></pre>
+$ type          &lt;chr&gt; "HKQuantityTypeIdentifierHeartRateVariabilitySDNN", "HKQ…
+$ sourceName    &lt;chr&gt; "Matthew’s Apple&nbsp;Watch", "Matthew’s Apple&nbsp;Watch", "Matth…
+$ sourceVersion &lt;chr&gt; "10.0.1", "10.0.1", "10.0.1", "10.0.1", "10.0.1", "10.0.…
+$ unit          &lt;chr&gt; "ms", "ms", "ms", "ms", "ms", "ms", "ms", "ms", "ms", "m…
+$ creationDate  &lt;chr&gt; "2023-10-25 15:37:04 +0100", "2023-10-25 17:44:53 +0100"…
+$ startDate     &lt;chr&gt; "2023-10-25 15:36:03 +0100", "2023-10-25 17:43:52 +0100"…
+$ endDate       &lt;chr&gt; "2023-10-25 15:37:02 +0100", "2023-10-25 17:44:45 +0100"…
+$ value         &lt;dbl&gt; 27.4134, 52.6730, 20.0241, 38.7226, 22.8867, 39.6330, 58…</code></pre>
 </div>
 </div>
-<p>Okay so we have half a million rows and eight columns. We’ve already cast our values to numeric, which is great. Looks like we have some metadata (<code>sourceName</code>, <code>sourceVersion</code>) about how the data was collected. I should take a quick glance at these fields but I can probably ignore them.</p>
+<p>We’ve already cast our values to numeric, which is great. Looks like we have some metadata (<code>sourceName</code>, <code>sourceVersion</code>) about how the data was collected. I should take a quick glance at these fields but I can probably ignore them.</p>
 <p>The <code>type</code> field looks to contain my different health data, so I’ll want to filter by that. <code>unit</code> is <em>probably</em> nothing I need to think about, but once I’ve found my sleep data I should just check that I can safely ignore the field.</p>
 <p>Then we have <code>creationDate</code>, <code>startDate</code> and <code>endDate</code>. I will need to cast these to datetimes (&amp; work out how to work with datetimes in R!) and then work out how they relate to the <code>value</code> field for the sleep data that I am interested in. I assume that the relationship between the datetime fields and <code>value</code> will differ depending on <code>type</code> so there’s not going to be a one-size-fits-all approach here.</p>
+<section id="type-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="type-distribution"><code>type</code> distribution</h3>
 <p>Let’s look at the most frequent <code>type</code>’s</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
