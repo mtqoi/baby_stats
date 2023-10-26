@@ -1,0 +1,21 @@
+project:
+  type: website
+
+website:
+  title: "Matt's Baby Stats"
+  navbar:
+    right:
+      - about.qmd
+      - icon: github
+        href: https://github.com/mtqoi
+      - icon: twitter
+        href: https://twitter.com/mtqoi
+      - icon: linkedin
+        href: https://www.linkedin.com/in/mattcthornton/
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+
+
+

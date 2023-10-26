@@ -1,0 +1,77 @@
+---
+title: "Opening Apple Health data"
+format: html
+editor: visual
+date: '2023-10-26'
+categories: [apple, code, import, xml, R]
+image: 'image.jpg'
+author: Matt Thornton
+---
+
+## 
+
+## Opening Apple Health data
+
+My partner exported her Apple Health data using the Health app's export functionality. We now have a folder of `.xml` files to deal with.
+
+Let's take a look at `export.xml` which I think should contain the sleep data.
+
+Reading the first few characters of the file
+
+```{r}
+library('readr')
+health_filepath <- '../../data/apple_health_export/export.xml'
+health_file <- substr(read_file(health_filepath), 1, 2000)
+print(health_file)
+```
+
+So it looks like Apple use `HKCharacteristicTypeIdentifier` as a prefix to some data. Perhaps this is just a field name?
+
+Let's parse the `xml` file properly and see what we have
+
+```{r}
+# install.packages("XML") # I need this one to work with the xml files
+library("XML")
+
+# here are some ones that I think I might need
+library("methods")
+library("tidyverse")
+library("lubridate")
+library("ggplot2")
+library("dplyr")
+
+# parse the xml file
+health <- xmlParse(health_filepath)
+summary(health)
+
+
+```
+
+Hmm, not very helpful?
+
+Instead of spending more time trying to parse the `xml` file myself, let's turn to Google. [This site](https://www.r-bloggers.com/2020/02/apple-health-export-part-i/) seems to have some explanations of what's going on with the Apple Watch data. It looks like indeed `HKQuantityTypeIdentifier` is just a prefix for a field name. There should be a field called `HKCategoryTypeIdentifierSleepAnalysis` which sounds like what I am after!
+
+## Exploring the data
+
+[This blog](https://www.johngoldin.com/blog/apple-health-export/2022-07-notes-apple-health-export/index.html) gives a snippet that should convert the entire `xml` import into a dataframe. This has saved a ton of time!
+
+```{r}
+# https://www.johngoldin.com/blog/apple-health-export/2022-07-notes-apple-health-export/index.html
+health_df <- XML:::xmlAttrsToDataFrame(health["//Record"], stringsAsFactors = FALSE) |>
+        as_tibble() |> mutate(value = as.numeric(value)) |>
+        select(-device)  
+
+summary(health_df)
+```
+
+```{r}
+glimpse(health_df)
+```
+
+Okay so we have half a million rows and eight columns. We've already cast our values to numeric, which is great. Looks like we have some metadata (`sourceName`, `sourceVersion`) about how the data was collected. I should take a quick glance at these fields but I can probably ignore them.
+
+The `type` field looks to contain my different health data, so I'll want to filter by that. `unit` is *probably* nothing I need to think about, but once I've found my sleep data I should just check that I can safely ignore the field.
+
+Then we have `creationDate`, `startDate` and `endDate`. I will need to cast these to datetimes (& work out how to work with datetimes in R!) and then work out how they relate to the `value` field for the sleep data that I am interested in. I assume that the relationship between the datetime fields and `value` will differ depending on `type` so there's not going to be a one-size-fits-all approach here.
+
+Let's look at the most frequent `type`'s

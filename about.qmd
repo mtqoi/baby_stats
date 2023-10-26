@@ -1,0 +1,20 @@
+---
+title: "About Matt's Baby Stats"
+image: profile.jpg
+about:
+  template: jolla
+  links:
+    - icon: github
+      text: Github
+      href: https://github.com/mtqoi
+    - icon: twitter
+      text: Twitter
+      href: https://twitter.com/mtqoi
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/mattcthornton/
+
+---
+
+
+About this blog
