@@ -210,3 +210,4 @@ $RECYCLE.BIN/
 *.jpg
 *.png
 *.Rproj
+data/*
