@@ -5,6 +5,11 @@ project:
 website:
   title: "Matt's Baby Stats"
   twitter-card: true
+  google-analytics: 
+    tracking-id: "G-FB820BRRJK"
+    anonymize-ip: true
+  cookie-consent: 
+    type: express
   navbar:
     right:
       - blog.qmd
@@ -25,4 +30,8 @@ format:
 execute:
   freeze: auto
   
+  
+
+
+
 
