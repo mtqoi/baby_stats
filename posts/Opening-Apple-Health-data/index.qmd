@@ -19,9 +19,10 @@ Let's take a look at `export.xml` which I think should contain the sleep data.
 Reading the first few characters of the file
 
 ```{r}
+#| output: asis
 library('readr')
 health_filepath <- '../../data/apple_health_export/export.xml'
-health_file <- substr(read_file(health_filepath), 1, 2000)
+health_file <- substr(read_file(health_filepath), 1, 1000)
 print(health_file)
 ```
 

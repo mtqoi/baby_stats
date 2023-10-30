@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Matt Thornton">
-<meta name="dcterms.date" content="2023-10-26">
+<meta name="dcterms.date" content="2023-10-28">
 
-<title>Matt’s Baby Stats - First off: how do I even open Apple Health data?</title>
+<title>Matt’s Baby Stats - What’s inside Apple Health data?</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -125,9 +125,9 @@ cookieconsent.run({
 
 
 <link rel="stylesheet" href="../../styles.css">
-<meta name="twitter:title" content="Matt’s Baby Stats - First off: how do I even open Apple Health data?">
+<meta name="twitter:title" content="Matt’s Baby Stats - What’s inside Apple Health data?">
 <meta name="twitter:description" content="">
-<meta name="twitter:image" content="image.png">
+<meta name="twitter:image" content="index_files/figure-html/unnamed-chunk-6-1.png">
 <meta name="twitter:card" content="summary_large_image">
 </head>
 
@@ -178,12 +178,12 @@ cookieconsent.run({
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">First off: how do I even open Apple Health data?</h1>
+      <h1 class="title">What’s inside Apple Health data?</h1>
                                 <div class="quarto-categories">
                 <div class="quarto-category">apple health</div>
                 <div class="quarto-category">apple watch</div>
                 <div class="quarto-category">code</div>
-                <div class="quarto-category">import</div>
+                <div class="quarto-category">explore</div>
                 <div class="quarto-category">xml</div>
                 <div class="quarto-category">R</div>
               </div>
@@ -203,7 +203,7 @@ cookieconsent.run({
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">October 26, 2023</p>
+        <p class="date">October 28, 2023</p>
       </div>
     </div>
     
@@ -221,27 +221,35 @@ cookieconsent.run({
 
 
 
-<section id="section" class="level2">
-<h2 class="anchored" data-anchor-id="section"></h2>
-</section>
-<section id="opening-apple-health-data" class="level2">
-<h2 class="anchored" data-anchor-id="opening-apple-health-data">Opening Apple Health data</h2>
-<p>I have exported my Apple Health data using the Health app’s export functionality. We now have a folder of <code>.xml</code> files to deal with. Eventually I’ll switch to using my partner’s tracking data–it will be a far better proxy of the baby’s sleep habits–but she is currently at a baby class so I’ll need to grab it later.</p>
-<p>Let’s take a look at <code>export.xml</code> which I think should contain the sleep data.</p>
-<p>Reading the first few characters of the file</p>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">'readr'</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>health_filepath <span class="ot">&lt;-</span> <span class="st">'../../data/apple_health_export/export.xml'</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>health_file <span class="ot">&lt;-</span> <span class="fu">substr</span>(<span class="fu">read_file</span>(health_filepath), <span class="dv">1</span>, <span class="dv">1000</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(health_file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>[1] “<!--?xml version=\"1.0\" encoding=\"UTF-8\"?-->&lt;!DOCTYPE HealthData [<!-- HealthKit Export Version: 13 -->&lt;!ELEMENT HealthData (ExportDate,Me,(Record|Correlation|Workout|ActivitySummary|ClinicalRecord|Audiogram|VisionPrescription)<em>)&gt;&lt;!ATTLIST HealthDatalocale CDATA #REQUIRED&gt;&lt;!ELEMENT ExportDate EMPTY&gt;&lt;!ATTLIST ExportDatevalue CDATA #REQUIRED&gt;&lt;!ELEMENT Me EMPTY&gt;&lt;!ATTLIST MeHKCharacteristicTypeIdentifierDateOfBirth CDATA #REQUIREDHKCharacteristicTypeIdentifierBiologicalSex CDATA #REQUIREDHKCharacteristicTypeIdentifierBloodType CDATA #REQUIREDHKCharacteristicTypeIdentifierFitzpatrickSkinType CDATA #REQUIREDHKCharacteristicTypeIdentifierCardioFitnessMedicationsUse CDATA #REQUIRED&gt;&lt;!ELEMENT Record ((MetadataEntry|HeartRateVariabilityMetadataList)</em>)&gt;&lt;!ATTLIST Recordtype CDATA #REQUIREDunit CDATA #IMPLIEDvalue CDATA #IMPLIEDsourceName CDATA #REQUIREDsourceVer”</p>
-<p>So it looks like Apple use <code>HKCharacteristicTypeIdentifier</code> as a prefix to some data. Perhaps this is just a field name?</p>
-<p>Let’s parse the <code>xml</code> file properly and see what we have</p>
+<p><a href="../../posts/Opening-Apple-Health-data/index.html">Last time</a> I was able to open the <code>xml</code> export from Apple Health and begin to explore what’s inside. In this post I’ll continue with that exploration and start to identify how I can see my partner’s sleep stats.</p>
+<section id="what-else-was-in-the-xml" class="level2">
+<h2 class="anchored" data-anchor-id="what-else-was-in-the-xml">What else was in the <code>xml</code>?</h2>
+<p>Before I actually import and parse the <code>xml</code> file, let’s take another look at the file as a string. In particular, near the top of the file I see the following</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("XML") # I need this one to work with the xml files</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"XML"</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># here are some ones that I think I might need</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"dplyr"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>health_filepath <span class="ot">&lt;-</span> <span class="st">'../../data/apple_health_export/export.xml'</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>health_file <span class="ot">&lt;-</span> <span class="fu">substr</span>(<span class="fu">read_file</span>(health_filepath), <span class="dv">100</span>, <span class="dv">500</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(health_file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "\n&lt;!ELEMENT HealthData (ExportDate,Me,(Record|Correlation|Workout|ActivitySummary|ClinicalRecord|Audiogram|VisionPrescription)*)&gt;\n&lt;!ATTLIST HealthData\n  locale CDATA #REQUIRED\n&gt;\n&lt;!ELEMENT ExportDate EMPTY&gt;\n&lt;!ATTLIST ExportDate\n  value CDATA #REQUIRED\n&gt;\n&lt;!ELEMENT Me EMPTY&gt;\n&lt;!ATTLIST Me\n  HKCharacteristicTypeIdentifierDateOfBirth                   CDATA #REQUIRED\n  HKCharacteristicTypeIdentifierBiolog"</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<p>The bit I am interested in looks like:</p>
+<pre><code>(Record|Correlation|Workout|ActivitySummary|ClinicalRecord|Audiogram|VisionPrescription)</code></pre>
+</blockquote>
+<p>Recalling that I was able to access what seemed to be the health records I was after via</p>
+<pre><code>health["//Record"]</code></pre>
+<p>I wonder what I’ll see when I look at</p>
+<ul>
+<li><p>‘Correlation’</p></li>
+<li><p>‘Workout’</p></li>
+<li><p>‘ActivitySummary’</p></li>
+<li><p>etc.</p></li>
+</ul>
+<p>Let’s take a look! Importing the <code>xml</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>
 Attaching package: 'dplyr'</code></pre>
@@ -256,131 +264,96 @@ Attaching package: 'dplyr'</code></pre>
 
     intersect, setdiff, setequal, union</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># parse the xml file</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>health <span class="ot">&lt;-</span> <span class="fu">xmlParse</span>(health_filepath)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(health)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>$nameCounts
-
-                          Record      InstantaneousBeatsPerMinute 
-                          505685                           171703 
-                   MetadataEntry HeartRateVariabilityMetadataList 
-                          144203                             2511 
-                 ActivitySummary                     WorkoutEvent 
-                             410                              172 
-               WorkoutStatistics                          Workout 
-                             143                               38 
-                   FileReference                     WorkoutRoute 
-                              30                               30 
-                      ExportDate                       HealthData 
-                               1                                1 
-                              Me 
-                               1 
-
-$numNodes
-[1] 824928</code></pre>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(XML)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>health <span class="ot">&lt;-</span> <span class="fu">xmlParse</span>(health_filepath)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<p>Hmm, not very helpful?</p>
-<p>Instead of spending more time trying to parse the <code>xml</code> file myself, let’s turn to Google. <a href="https://www.r-bloggers.com/2020/02/apple-health-export-part-i/">This site</a> seems to have some explanations of what’s going on with the Apple Watch data. It looks like indeed <code>HKQuantityTypeIdentifier</code> is just a prefix for a field name. There should be a field called <code>HKCategoryTypeIdentifierSleepAnalysis</code> which sounds like what I am after!</p>
-</section>
-<section id="exploring-the-data" class="level2">
-<h2 class="anchored" data-anchor-id="exploring-the-data">Exploring the data</h2>
-<p><a href="https://www.johngoldin.com/blog/apple-health-export/2022-07-notes-apple-health-export/index.html">This blog</a> gives a snippet that should convert the entire <code>xml</code> import into a dataframe. This has saved a ton of time!</p>
+<p>and converting it to a dataframe again</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># https://www.johngoldin.com/blog/apple-health-export/2022-07-notes-apple-health-export/index.html</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>health_df <span class="ot">&lt;-</span> XML<span class="sc">:::</span><span class="fu">xmlAttrsToDataFrame</span>(health[<span class="st">"//Record"</span>], <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">as_tibble</span>() <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">value =</span> <span class="fu">as.numeric</span>(value)) <span class="sc">|&gt;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">select</span>(<span class="sc">-</span>device)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>correlation <span class="ot">&lt;-</span> XML<span class="sc">:::</span><span class="fu">xmlAttrsToDataFrame</span>(health[<span class="st">'//Correlation'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: There was 1 warning in `mutate()`.
-ℹ In argument: `value = as.numeric(value)`.
-Caused by warning:
-! NAs introduced by coercion</code></pre>
+<pre><code>Warning in combineNamedVectors(lapply(doc, xmlAttrs), attrs, omit, ...): no
+elements to combine across records</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>workout <span class="ot">&lt;-</span> XML<span class="sc">:::</span><span class="fu">xmlAttrsToDataFrame</span>(health[<span class="st">'//Workout'</span>])</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>activity_summary <span class="ot">&lt;-</span> XML<span class="sc">:::</span><span class="fu">xmlAttrsToDataFrame</span>(health[<span class="st">'//ActivitySummary'</span>])</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>clinical <span class="ot">&lt;-</span> XML<span class="sc">:::</span><span class="fu">xmlAttrsToDataFrame</span>(health[<span class="st">'//ClinicalRecord'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in combineNamedVectors(lapply(doc, xmlAttrs), attrs, omit, ...): no
+elements to combine across records</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>audiogram <span class="ot">&lt;-</span> XML<span class="sc">:::</span><span class="fu">xmlAttrsToDataFrame</span>(health[<span class="st">'//Audiogram'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in combineNamedVectors(lapply(doc, xmlAttrs), attrs, omit, ...): no
+elements to combine across records</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>vision <span class="ot">&lt;-</span> XML<span class="sc">:::</span><span class="fu">xmlAttrsToDataFrame</span>(health[<span class="st">'//VisionPrescription'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in combineNamedVectors(lapply(doc, xmlAttrs), attrs, omit, ...): no
+elements to combine across records</code></pre>
 </div>
 </div>
-<p>I don’t <em>really</em> understand what’s going on here yet so let’s try to pull it apart bit by bit.</p>
-<p>According to the snippet the information I should be interested in is contained in <code>health['//Record']</code>. Inspecting this with <code>typeof(health['//Record'])</code> I can see that it’s a list so let’s just grab the first element:</p>
+<p>Ok so some of these just don’t exist in my dataset. Turns out I only have something there for <code>ActivitySummary</code></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>health[<span class="st">'//Record'</span>][[<span class="dv">1</span>]] <span class="co"># remember that R is 1-indexed, unlike Python!</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(activity_summary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;Record type="HKQuantityTypeIdentifierHeight" sourceName="Health" sourceVersion="15.6.1" unit="ft" creationDate="2022-08-22 21:27:24 +0100" startDate="2022-08-22 21:27:24 +0100" endDate="2022-08-22 21:27:24 +0100" value="6.33333"/&gt; </code></pre>
+<pre><code>Rows: 410
+Columns: 10
+$ dateComponents         &lt;chr&gt; "2022-09-12", "2022-09-13", "2022-09-14", "2022…
+$ activeEnergyBurned     &lt;chr&gt; "58.077", "195.245", "134.852", "53.301", "43.0…
+$ activeEnergyBurnedGoal &lt;chr&gt; "360", "360", "360", "360", "360", "360", "360"…
+$ activeEnergyBurnedUnit &lt;chr&gt; "kcal", "kcal", "kcal", "kcal", "kcal", "kcal",…
+$ appleMoveTime          &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…
+$ appleMoveTimeGoal      &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…
+$ appleExerciseTime      &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…
+$ appleExerciseTimeGoal  &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…
+$ appleStandHours        &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…
+$ appleStandHoursGoal    &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…</code></pre>
 </div>
 </div>
-<p>Ok now we’re talking. It looks like those <code>HKQuantityTypeIdenifiers</code> are identified with some field called <code>type</code>. We also seem to have some metadata about where this data came from - seems like this entry is from the Apple Health app? We have some info about the app itself (perhaps ‘15.6.1’ corresponds to the Health app, or it could be iOS version maybe?).</p>
-<p>We have a few datetime fields that I’ll need to dig into, and then a value ‘6.3333’ and a unit ‘ft’. It looks like this entry must have been when I entered my height when I first got my iPhone.</p>
-<p>Let’s take a look at a few more:</p>
+<p>Oh awesome! It looks like this just contains information about workouts and movement. Let’s pick a recent date that should have some data collected by the Apple Watch.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>health[<span class="st">'//Record'</span>][<span class="dv">42</span><span class="sc">:</span><span class="dv">44</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>activity_summary <span class="sc">%&gt;%</span> </span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(dateComponents <span class="sc">&gt;=</span> <span class="st">'2023-10-01'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  glimpse</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[[1]]
-&lt;Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Matthew’s Apple&nbsp;Watch" sourceVersion="9.3.1" device="&amp;lt;&amp;lt;HKDevice: 0x280934230&amp;gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,11, software:9.3.1&amp;gt;" unit="count/min" creationDate="2023-03-20 13:59:56 +0100" startDate="2023-03-20 13:59:55 +0100" endDate="2023-03-20 13:59:55 +0100" value="77"&gt;
-  &lt;MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/&gt;
-&lt;/Record&gt; 
-
-[[2]]
-&lt;Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Matthew’s Apple&nbsp;Watch" sourceVersion="9.3.1" device="&amp;lt;&amp;lt;HKDevice: 0x280934230&amp;gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,11, software:9.3.1&amp;gt;" unit="count/min" creationDate="2023-03-20 14:00:01 +0100" startDate="2023-03-20 13:59:57 +0100" endDate="2023-03-20 13:59:57 +0100" value="77"&gt;
-  &lt;MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/&gt;
-&lt;/Record&gt; 
-
-[[3]]
-&lt;Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Matthew’s Apple&nbsp;Watch" sourceVersion="9.3.1" device="&amp;lt;&amp;lt;HKDevice: 0x280934230&amp;gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,11, software:9.3.1&amp;gt;" unit="count/min" creationDate="2023-03-20 14:00:06 +0100" startDate="2023-03-20 14:00:03 +0100" endDate="2023-03-20 14:00:03 +0100" value="76"&gt;
-  &lt;MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/&gt;
-&lt;/Record&gt; </code></pre>
+<pre><code>Rows: 26
+Columns: 10
+$ dateComponents         &lt;chr&gt; "2023-10-01", "2023-10-02", "2023-10-03", "2023…
+$ activeEnergyBurned     &lt;chr&gt; "647.855", "673.663", "616.126", "651.02", "685…
+$ activeEnergyBurnedGoal &lt;chr&gt; "600", "600", "600", "600", "600", "600", "600"…
+$ activeEnergyBurnedUnit &lt;chr&gt; "kcal", "kcal", "kcal", "kcal", "kcal", "kcal",…
+$ appleMoveTime          &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…
+$ appleMoveTimeGoal      &lt;chr&gt; "0", "0", "0", "0", "0", "0", "0", "0", "0", "0…
+$ appleExerciseTime      &lt;chr&gt; "25", "17", "8", "8", "10", "22", "13", "27", "…
+$ appleExerciseTimeGoal  &lt;chr&gt; "20", "20", "20", "20", "20", "20", "20", "20",…
+$ appleStandHours        &lt;chr&gt; "17", "16", "14", "16", "19", "17", "12", "19",…
+$ appleStandHoursGoal    &lt;chr&gt; "12", "12", "12", "12", "12", "12", "12", "12",…</code></pre>
 </div>
 </div>
-<p>Three records of my heart rate, by the looks of things. I was right that our previous <code>sourceName</code> corresponded to iPhone Health app - clearly these three entries are from my Apple Watch.</p>
-<p>The rest of the earlier snippet just looks like it’s converting these entries into a dataframe using <code>XML:::xmlAttrsToDataFrame()</code>. I can’t easily find documentation for this but I will search harder later. In particular I will want to see whether it has more arguments than just <code>stringsasfactors</code>.</p>
-<p>Taking a look at the dataframe we have made:</p>
+<p>Looks like just the info given in the Workouts section of the Apple Watch.</p>
+<p>TODO: add screenshot.</p>
+<p>It will be interesting to see how this relates to the data contained in <code>health['//Record']</code>. Is it entirely separate, or just presented in a slightly nice format?</p>
+<p>Just for fun let’s look at my <code>appleStandHours</code>. Here’s what I see in my Health app:</p>
+<p>TODO: add screenshot.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(health_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>     type            sourceName        sourceVersion          unit          
- Length:505685      Length:505685      Length:505685      Length:505685     
- Class :character   Class :character   Class :character   Class :character  
- Mode  :character   Mode  :character   Mode  :character   Mode  :character  
-                                                                            
-                                                                            
-                                                                            
-                                                                            
- creationDate        startDate           endDate              value         
- Length:505685      Length:505685      Length:505685      Min.   :   0.000  
- Class :character   Class :character   Class :character   1st Qu.:   0.365  
- Mode  :character   Mode  :character   Mode  :character   Median :   1.266  
-                                                          Mean   :  27.002  
-                                                          3rd Qu.:  35.696  
-                                                          Max.   :1290.000  
-                                                          NA's   :17576     </code></pre>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>activity_summary <span class="sc">%&gt;%</span> </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'dateComponents'</span>, <span class="st">'appleStandHours'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">appleStandHours =</span> <span class="fu">as.numeric</span>(appleStandHours),</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">dateComponents =</span> <span class="fu">as.Date</span>(dateComponents) <span class="co"># Q: why is `Date` capitalised but `numeric` isn't?</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>         ) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(dateComponents <span class="sc">&gt;=</span> <span class="st">'2023-08-01'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">toHighlight =</span> <span class="fu">ifelse</span>(appleStandHours<span class="sc">&gt;=</span><span class="dv">12</span>, <span class="st">"yes"</span>, <span class="st">"no"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>dateComponents, <span class="at">y=</span>appleStandHours, <span class="at">fill=</span>toHighlight)) <span class="sc">+</span> </span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">'identity'</span>) <span class="sc">+</span> </span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">12</span>, <span class="at">linetype=</span><span class="st">'dotted'</span>, <span class="at">col =</span> <span class="st">'black'</span>) <span class="sc">+</span> </span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="fu">as.Date</span>(<span class="st">'2023-08-05'</span>), <span class="at">y =</span> <span class="dv">12</span>, <span class="at">label =</span> <span class="st">"Stand Goal"</span>, <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(health_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 505685      8</code></pre>
-</div>
-</div>
-<p>Okay so we have half a million rows and eight columns. Let’s take a look inside:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>health_df <span class="sc">%&gt;%</span> </span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tail</span>(<span class="dv">10</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  glimpse</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Rows: 10
-Columns: 8
-$ type          &lt;chr&gt; "HKQuantityTypeIdentifierHeartRateVariabilitySDNN", "HKQ…
-$ sourceName    &lt;chr&gt; "Matthew’s Apple&nbsp;Watch", "Matthew’s Apple&nbsp;Watch", "Matth…
-$ sourceVersion &lt;chr&gt; "10.0.1", "10.0.1", "10.0.1", "10.0.1", "10.0.1", "10.0.…
-$ unit          &lt;chr&gt; "ms", "ms", "ms", "ms", "ms", "ms", "ms", "ms", "ms", "m…
-$ creationDate  &lt;chr&gt; "2023-10-25 15:37:04 +0100", "2023-10-25 17:44:53 +0100"…
-$ startDate     &lt;chr&gt; "2023-10-25 15:36:03 +0100", "2023-10-25 17:43:52 +0100"…
-$ endDate       &lt;chr&gt; "2023-10-25 15:37:02 +0100", "2023-10-25 17:44:45 +0100"…
-$ value         &lt;dbl&gt; 27.4134, 52.6730, 20.0241, 38.7226, 22.8867, 39.6330, 58…</code></pre>
-</div>
-</div>
-<p>We’ve already cast our values to numeric, which is great. Looks like we have some metadata (<code>sourceName</code>, <code>sourceVersion</code>) about how the data was collected. I should take a quick glance at these fields but I can probably ignore them.</p>
-<p>The <code>type</code> field looks to contain my different health data, so I’ll want to filter by that. <code>unit</code> is <em>probably</em> nothing I need to think about, but once I’ve found my sleep data I should just check that I can safely ignore the field.</p>
-<p>Then we have <code>creationDate</code>, <code>startDate</code> and <code>endDate</code>. I will need to cast these to datetimes (&amp; work out how to work with datetimes in R!) and then work out how they relate to the <code>value</code> field for the sleep data that I am interested in. I assume that the relationship between the datetime fields and <code>value</code> will differ depending on <code>type</code> so there’s not going to be a one-size-fits-all approach here.</p>
-<p>In the next post I will start to dig in to these fields!</p>
+<p>One thing I’m noting is how easy this was to plot using <code>ggplot</code>. In Python to create similar plots I’ve had to think more about the mechanics of what my code is doing. I’ll be interested to see whether getting more comfortable with <code>ggplot</code> just makes my exploratory analysis faster and lets me abstract away from the code and focus on the meaning of my data.</p>
+<p>TODO: write another post which is a comparison between R and Python for this same graph.</p>
 
 
 </section>

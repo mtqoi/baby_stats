@@ -6,3 +6,8 @@ freeze: true
 
 # Enable banner style title blocks
 title-block-banner: true
+
+
+comments: 
+  utterances: 
+    repo:  mtqoi/baby_stats_comments

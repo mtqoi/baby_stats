@@ -208,3 +208,4 @@ $RECYCLE.BIN/
 
 *.Rproj
 data/*
+.idea/*

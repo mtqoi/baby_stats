@@ -1,0 +1,14 @@
+{
+  "hash": "0e8c7879bdb1fe713a8841d6132552a1",
+  "result": {
+    "markdown": "---\ntitle: \"What's inside Apple Health data?\"\nformat: html\neditor: visual\ndate: '2023-10-28'\ncategories: [apple health, apple watch, code, explore, xml, R]\nauthor: Matt Thornton\ndraft: true\n---\n\n\nLast time I was able to open the `xml` export from Apple Health and begin to explore what's inside. In this post I'll continue with that exploration and start to identify how I can see my partner's sleep stats.\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(dplyr)\n```\n\n::: {.cell-output .cell-output-stderr}\n```\n\nAttaching package: 'dplyr'\n```\n:::\n\n::: {.cell-output .cell-output-stderr}\n```\nThe following objects are masked from 'package:stats':\n\n    filter, lag\n```\n:::\n\n::: {.cell-output .cell-output-stderr}\n```\nThe following objects are masked from 'package:base':\n\n    intersect, setdiff, setequal, union\n```\n:::\n\n```{.r .cell-code}\nlibrary(XML)\nhealth_filepath <- '../../data/apple_health_export/export.xml'\nhealth <- xmlParse(health_filepath)\n```\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

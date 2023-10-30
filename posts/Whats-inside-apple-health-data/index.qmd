@@ -1,0 +1,107 @@
+---
+title: "What's inside Apple Health data?"
+format: html
+editor: visual
+date: '2023-10-28'
+categories: [apple health, apple watch, code, explore, xml, R]
+author: Matt Thornton
+draft: true
+---
+
+[Last time](../Opening-Apple-Health-data/index.qmd) I was able to open the `xml` export from Apple Health and begin to explore what's inside. In this post I'll continue with that exploration and start to identify how I can see my partner's sleep stats.
+
+## What else was in the `xml`?
+
+Before I actually import and parse the `xml` file, let's take another look at the file as a string. In particular, near the top of the file I see the following
+
+```{r}
+library(readr)
+health_filepath <- '../../data/apple_health_export/export.xml'
+health_file <- substr(read_file(health_filepath), 100, 500)
+print(health_file)
+```
+
+> The bit I am interested in looks like:
+>
+> ```         
+> (Record|Correlation|Workout|ActivitySummary|ClinicalRecord|Audiogram|VisionPrescription)
+> ```
+
+Recalling that I was able to access what seemed to be the health records I was after via
+
+```         
+health["//Record"]
+```
+
+I wonder what I'll see when I look at
+
+-   'Correlation'
+
+-   'Workout'
+
+-   'ActivitySummary'
+
+-   etc.
+
+Let's take a look! Importing the `xml`:
+
+```{r}
+library(dplyr)
+library(XML)
+health <- xmlParse(health_filepath)
+```
+
+and converting it to a dataframe again
+
+```{r}
+correlation <- XML:::xmlAttrsToDataFrame(health['//Correlation'])
+workout <- XML:::xmlAttrsToDataFrame(health['//Workout'])
+activity_summary <- XML:::xmlAttrsToDataFrame(health['//ActivitySummary'])
+clinical <- XML:::xmlAttrsToDataFrame(health['//ClinicalRecord'])
+audiogram <- XML:::xmlAttrsToDataFrame(health['//Audiogram'])
+vision <- XML:::xmlAttrsToDataFrame(health['//VisionPrescription'])
+
+```
+
+Ok so some of these just don't exist in my dataset. Turns out I only have something there for `ActivitySummary`
+
+```{r}
+glimpse(activity_summary)
+```
+
+Oh awesome! It looks like this just contains information about workouts and movement. Let's pick a recent date that should have some data collected by the Apple Watch.
+
+```{r}
+activity_summary %>% 
+  filter(dateComponents >= '2023-10-01') %>%
+  glimpse
+```
+
+Looks like just the info given in the Workouts section of the Apple Watch.
+
+TODO: add screenshot.
+
+It will be interesting to see how this relates to the data contained in `health['//Record']`. Is it entirely separate, or just presented in a slightly nice format?
+
+Just for fun let's look at my `appleStandHours`. Here's what I see in my Health app:
+
+TODO: add screenshot.
+
+```{r}
+library(ggplot2)
+activity_summary %>% 
+  select('dateComponents', 'appleStandHours') %>% 
+  mutate(appleStandHours = as.numeric(appleStandHours),
+         dateComponents = as.Date(dateComponents) # Q: why is `Date` capitalised but `numeric` isn't?
+         ) %>% 
+  filter(dateComponents >= '2023-08-01') %>% 
+  mutate(toHighlight = ifelse(appleStandHours>=12, "yes", "no")) %>% 
+  ggplot(aes(x=dateComponents, y=appleStandHours, fill=toHighlight)) + 
+  geom_bar(stat='identity') + 
+  geom_hline(yintercept=12, linetype='dotted', col = 'black') + 
+  annotate("text", x = as.Date('2023-08-05'), y = 12, label = "Stand Goal", vjust = -0.5)
+```
+
+One thing I'm noting is how easy this was to plot using `ggplot`. In Python to create similar plots I've had to think more about the mechanics of what my code is doing. I'll be interested to see whether getting more comfortable with `ggplot` just makes my exploratory analysis faster and lets me abstract away from the code and focus on the meaning of my data.
+
+TODO: write another post which is a comparison between R and Python for this same graph.
