@@ -1,0 +1,193 @@
+---
+title: "Apple Watch Sleep Data"
+editor: visual
+---
+
+# Importing my sleep data
+
+I have exported my Apple Health data from the iOS Health app and saved it to the file `/data/apple_health_export_2024-05-16` . I think what I need is in the `export.xml` file so let's read that in.
+
+```{r}
+library(tidyverse)
+# library(readr)
+# install.packages('XML')
+library(XML)
+
+export_filepath <- './data/apple_health_export_2024-05-16/export.xml'
+health <- xmlParse(export_filepath)
+```
+
+Let's take a look inside
+
+```{r}
+summary(health)
+```
+
+Ok there's a lot going on here.
+
+A quick google throws up [this site](https://www.r-bloggers.com/2020/02/apple-health-export-part-i/) which seems to have done a lot of hard work for me already! It looks like there should be a field called `HKCategoryTypeIdentifierSleepAnalysis` which is perhaps what I am after.
+
+[This blog](https://www.johngoldin.com/blog/apple-health-export/2022-07-notes-apple-health-export/) (actually by the same guy by the looks of it) provides a snippet which should transform the entire xml import into a dataframe
+
+```{r}
+health_df <- XML:::xmlAttrsToDataFrame(health["//Record"], stringsAsFactors = FALSE) |>
+        as_tibble() |> mutate(value = as.numeric(value)) |>
+        select(-device)  
+```
+
+```{r}
+glimpse(tail(health_df)) # taking a tail because the first few rows are weight ;)
+```
+
+Cool so looks like I should try and filter on the `type` field. What distinct values can this take?
+
+```{r}
+health_df %>% 
+  distinct(type)
+```
+
+Cool so there's only one related to sleep: `HKCategoryTypeIdentifierSleepAnalysis`.
+
+Let's filter to that and take a poke around
+
+```{r}
+health_df %>% 
+  select(-c('sourceName', 'sourceVersion')) %>% # removing fields that I don't care about
+  filter(type == 'HKCategoryTypeIdentifierSleepAnalysis') %>% 
+  head()
+```
+
+Ok so there are some problems here - the `value` field is always `NA`.
+
+Thankfully our [old friend](https://www.johngoldin.com/blog/apple-health-export/2023-02-sleep-export/index.html#sleep-stages) looks like he can help us here!
+
+![](images/clipboard-1639598289.png)
+
+Apparently the issue is because of the cast to numeric type in
+
+```         
+XML:::xmlAttrsToDataFrame(health["//Record"], stringsAsFactors = FALSE) |>
+        as_tibble() |> mutate(value = as.numeric(value)) |>
+        select(-device) 
+```
+
+above.
+
+He helpfully provides the following snippet which moves the `value` field to the `type` field whenever the `value` is non-numeric.
+
+```{r}
+health_df <- XML:::xmlAttrsToDataFrame(health["//Record"], stringsAsFactors = FALSE) %>% 
+      as_tibble() %>%  
+    mutate(
+      type = case_when(
+      is.na(value) ~ type,
+      !str_detect(value, "^HK") ~ type,
+      TRUE ~ str_replace(value, "HKCategoryValue", "HKCategoryTypeIdentifier")
+    ),
+  value = ifelse(is.na(str_extract(value, "^HKCategory")),
+                 as.numeric(value), NA_real_),
+  type = str_replace(type, "HKCategoryTypeIdentifier", "")) %>% 
+  select(-c('sourceName', 'sourceVersion', 'device')) # removing fields that I don't care about
+```
+
+Let's check our sleep related fields
+
+```{r}
+# library(stringr)
+sleep_df <- health_df %>% 
+  filter(str_detect(type, "sleep")) %>% 
+  select(-c(unit, value)) %>% # the 'unit' field is always null 
+  mutate(creationDate = ymd_hms(creationDate, tz='UTC'),
+         startDate = ymd_hms(startDate, tz='UTC'),
+         endDate = ymd_hms(endDate, tz='UTC'),
+         type = str_replace(type, 'SleepAnalysisAsleep', '') # format the type slightly nicer
+         )
+head(sleep_df)
+```
+
+Now we are cooking with gas. Thanks John Goldin!
+
+I will need to go back to his blog later since in the [original blog post](https://www.johngoldin.com/blog/apple-health-export/2020-02-apple-health-export1/index.en.html) there was a long discussion about handling the timestamps correctly.
+
+# Parsing my sleep data
+
+Let's forget about timestamp issues for now and just try to create a basic plot for a single 24 hour period
+
+```{r}
+subset_df <- sleep_df %>% 
+  select(-creationDate) %>% 
+  filter(startDate >='2024-01-10 12:00:00' & endDate <= '2024-01-11 11:59:59')
+head(subset_df)
+```
+
+I will need to add in 'awake' times to ensure I have full time coverage. With some help from chat gippity
+
+```{r}
+overall_start <- min(subset_df$startDate)
+overall_end <- max(subset_df$endDate)
+
+time_points <- data.frame(
+  time = seq(from = overall_start, to = overall_end, by = 'min')
+)
+
+awake_df <- data.frame(
+  type = 'awake', 
+  startDate = time_points$time, 
+  endDate = lead(time_points$time, default=overall_end) # todo: understand this line
+)
+
+# remove awake intervals that are overlapping with something else
+overlap_intervals <- interval(subset_df$startDate, subset_df$endDate)
+awake_df <- awake_df %>%
+  filter(!map_lgl(awake_df$startDate, ~ any(.x %within% overlap_intervals)))
+
+# combine
+combined_df <- subset_df %>% 
+  bind_rows(awake_df) %>% 
+  arrange(startDate) %>% 
+  distinct(startDate, .keep_all = TRUE) %>% 
+  fill(endDate, .direction='up') %>% 
+  filter(!is.na(endDate)) %>% 
+  group_by(startDate) %>%
+  slice(which.min(endDate))  %>%
+  ungroup() %>% 
+  mutate(prev_type = dplyr::lag(type, default=first(type)),
+         test_bool = type != prev_type, 
+         group = cumsum(test_bool)
+         )  %>% 
+  group_by(type, group) %>% 
+  summarize(startDate = min(startDate),
+            endDate = max(endDate),
+            .groups='drop') %>% 
+  select(-group) %>% 
+  arrange(startDate)
+
+
+  # mutate(group = cumsum(type != lag(type, default = first(type))))
+
+
+combined_df
+
+```
+
+```{r}
+ggplot(combined_df, aes(x = startDate, xend = endDate, y = 0, yend = 0, color = type)) +
+  geom_segment(linewidth = 100) +
+  scale_color_manual(values = c("Core" = "#3169F5", "Deep" = "#26208C", "REM" = "#73C5FA", "awake" = "#EC5D49")) +
+  labs(title = "Re-creating Apple Health sleep chart", x = "Time", y = "") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.title.y = element_blank(), legend.position="none")
+
+```
+
+Looks cool!
+
+TODO:
+
+-   [ ] wrap into a function that will take a data parameter and give me one of these plots
+
+-   [ ] work out how to join multiple plots together
+
+-   [ ] on days where I forgot to wear my apple watch the app gives me a kinda greeny colour. I should try to reproduce this
+
+-   [ ] play around with colours, including whether I can get a shifting gradient across the entire output image
