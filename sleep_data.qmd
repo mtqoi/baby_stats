@@ -191,3 +191,152 @@ TODO:
 -   [ ] on days where I forgot to wear my apple watch the app gives me a kinda greeny colour. I should try to reproduce this
 
 -   [ ] play around with colours, including whether I can get a shifting gradient across the entire output image
+
+# Creating a function
+
+I'll create two functions, one which takes a date as an input and returns the corresponding nice dataframe, and another which takes a data as an input and plots the corresponding chart
+
+```{r}
+prep_one_day_sleep <- function(sleep_df, date) {
+  
+  subset_df <- sleep_df %>% 
+  select(-creationDate) %>% 
+  filter(startDate >=paste(date, '12:00:00') & endDate <= paste(
+    format(as.Date(date) + 1, "%Y-%m-%d"), # taking the next day
+    '11:59:59'))
+  
+  
+  overall_start <- min(subset_df$startDate)
+  overall_end <- max(subset_df$endDate)
+  
+  time_points <- data.frame(
+    time = seq(from = overall_start, to = overall_end, by = 'min')
+  )
+  
+  awake_df <- data.frame(
+    type = 'awake', 
+    startDate = time_points$time, 
+    endDate = lead(time_points$time, default=overall_end) # todo: understand this line
+  )
+  
+  # remove awake intervals that are overlapping with something else
+  overlap_intervals <- interval(subset_df$startDate, subset_df$endDate)
+  awake_df <- awake_df %>%
+    filter(!map_lgl(awake_df$startDate, ~ any(.x %within% overlap_intervals)))
+  
+  # combine
+  combined_df <- subset_df %>% 
+    bind_rows(awake_df) %>% 
+    arrange(startDate) %>% 
+    distinct(startDate, .keep_all = TRUE) %>% 
+    fill(endDate, .direction='up') %>% 
+    filter(!is.na(endDate)) %>% 
+    group_by(startDate) %>%
+    slice(which.min(endDate))  %>%
+    ungroup() %>% 
+    mutate(prev_type = dplyr::lag(type, default=first(type)),
+           test_bool = type != prev_type, 
+           group = cumsum(test_bool)
+           )  %>% 
+    group_by(type, group) %>% 
+    summarize(startDate = min(startDate),
+              endDate = max(endDate),
+              .groups='drop') %>% 
+    select(-group) %>% 
+    arrange(startDate)
+  
+  combined_df
+}
+```
+
+```{r}
+prep_one_day_sleep(sleep_df, '2024-01-04')
+```
+
+Cool now let's write one to do the plotting
+
+```{r}
+plot_one_day_sleep <- function(sleep_df, date) {
+  total_df <- prep_one_day_sleep(sleep_df, date)
+
+  ggplot(total_df, aes(y = startDate, yend = endDate, x = 0, xend = 0, color = type)) +
+    geom_segment(linewidth = 50) +
+    scale_color_manual(values = c("Core" = "#3169F5", "Deep" = "#26208C", "REM" = "#73C5FA", "awake" = "#EC5D49")) +
+    # labs(title = "Re-creating Apple Health sleep chart", x = "Time", y = "") +
+    theme_void() +
+    theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.title.y = element_blank(), legend.position="none", axis.ticks.x = element_blank(), axis.title.x = element_blank(), axis.text.x = element_blank(),
+          plot.margin = unit(c(0, 0, 0, 0), "pt")
+          )
+  
+}
+```
+
+```{r}
+plot_one_day_sleep(sleep_df, '2024-01-01')
+```
+
+```{r}
+# install.packages('patchwork')
+library(patchwork)
+
+plot1 <- plot_one_day_sleep(sleep_df, '2024-01-01')
+plot2 <- plot_one_day_sleep(sleep_df, '2024-01-02')
+plot3 <- plot_one_day_sleep(sleep_df, '2024-01-03')
+
+combined_plot <- plot1 + plot2 + plot3 + plot_layout(ncol = 3, widths = c(1, 1, 1)) &
+  theme(plot.margin = unit(c(0, 0, 0, 0), "pt"))
+print(combined_plot)
+ggsave("combined_plot.png", plot = combined_plot, width = 4.5, height = 6, units = "in", dpi = 300)
+
+```
+
+So saving the three plots with width = 4.5 seems to work well.
+
+```{r}
+width_ratio = 4.5 / 3
+```
+
+```{r}
+plot1 <- plot_one_day_sleep(sleep_df, '2024-01-01')
+plot2 <- plot_one_day_sleep(sleep_df, '2024-01-02')
+plot3 <- plot_one_day_sleep(sleep_df, '2024-01-03')
+plot4 <- plot_one_day_sleep(sleep_df, '2024-01-04')
+
+combined_plot <- plot1 + plot2 + plot3 + plot4 + plot_layout(ncol = 4, widths = c(1, 1, 1, 1)) &
+  theme(plot.margin = unit(c(0, 0, 0, 0), "pt"))
+print(combined_plot)
+ggsave("combined_plot.png", plot = combined_plot, width = width_ratio * 4, height = 6, units = "in", dpi = 300)
+```
+
+```{r}
+combine_plots_for_date_range <- function(sleep_df, start_date, end_date, width_ratio = 4.5/3) {
+  # Generate sequence of dates
+  dates <- seq.Date(as.Date(start_date), as.Date(end_date), by = "day")
+  
+  # Create a list of plots
+  plots <- lapply(dates, function(date) {
+    plot_one_day_sleep(sleep_df, as.character(date))
+  })
+  
+  # Combine the plots horizontally with zero whitespace
+ combined_plot <- wrap_plots(plots, ncol = length(dates), widths = rep(1, length(dates))) & 
+    theme(
+      plot.margin = unit(c(0, 0, 0, 0), "pt"),  # Ensure no margins
+      panel.spacing = unit(0, "pt")  # No spacing between panels
+    )
+  
+  # combined_plot <- plots + plot_layout(ncol = length(dates), widths = rep(1, length(dates))) &
+  # theme(plot.margin = unit(c(0, 0, 0, 0), "pt"))
+  
+  # Display the combined plot
+  print(combined_plot)
+  
+  # Save the combined plot with specified dimensions and no whitespace
+  ggsave("combined_plot.png", plot = combined_plot, width = width_ratio * length(dates), height = 6, units = "in", dpi = 300)
+}
+
+```
+
+```{r}
+combine_plots_for_date_range(sleep_df, '2023-04-01', '2023-04-30')
+```
